@@ -1,0 +1,8 @@
+{
+  "domain": "htu21d",
+  "name": "HTU21D",
+  "documentation": "https://www.home-assistant.io/components/htu21d",
+  "dependencies": ["adafruit-circuitpython-htu21d"],
+  "codeowners": ["@uutzinger"],
+  "requirements": []
+}

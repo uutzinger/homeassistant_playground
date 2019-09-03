@@ -66,8 +66,17 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 class HTU21DHandler:
     """Implement HTU21D hardware communication."""
 
+    class Data:
+        """Sensor data representation."""
+
+        def __init__(self):
+            """Initialize the sensor data object."""
+            self.temperature = None
+            self.humidity = None
+
     def __init__(self, sensor):
         """Initialize the sensor handler."""
+        self.sensor_data = HTU21DHandler.Data()
         self.sensor = sensor
         # update
         self.sensor_data.temperature = None

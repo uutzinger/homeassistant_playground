@@ -13,7 +13,7 @@ from   homeassistant.util.temperature      import celsius_to_fahrenheit
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME             = 'HTU21D Sensor'
-MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=3)
+MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=1)
 
 SENSOR_TEMPERATURE = "temperature"
 SENSOR_HUMIDITY    = "humidity"
@@ -79,14 +79,14 @@ class HTU21DHandler:
         self.sensor_data = HTU21DHandler.Data()
         self.sensor = sensor
         # update
-        self.sensor_data.temperature = None
-        self.sensor_data.humidity    = None
+        self.sensor_data.temperature = self.sensor.temperature
+        self.sensor_data.humidity    = self.sensor.relative_humidity
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     def update(self):
-        """Read sensor data."""
-        self.sensor_data.temperature = self.sensor.temperature
-        self.sensor_data.humidity    = self.sensor.relative_humidity
+        """Read sensor data & low pass."""
+        self.sensor_data.temperature = 0.8*self.sensor_data.temperature + 0.2*self.sensor.temperature
+        self.sensor_data.humidity    = 0.8*self.sensor_data.humidity    + 0.2*self.sensor.relative_humidity
 
 class HTU21DSensor(Entity):
     """Implementation of the HTU21D sensor."""
@@ -120,9 +120,13 @@ class HTU21DSensor(Entity):
         """Get the latest data from the HTU21D sensor handler and update the state."""
         await self.hass.async_add_job(self.htu21d_client.update)
         if self.type == SENSOR_TEMPERATURE:
-            value = round(self.htu21d_client.sensor_data.temperature, 1)
-            if self.temp_unit == TEMP_FAHRENHEIT:
-                value = round(celsius_to_fahrenheit(value), 1)
+            value = self.htu21d_client.sensor_data.temperature
+            if value != None:
+                if self.temp_unit == TEMP_FAHRENHEIT:
+                    value = celsius_to_fahrenheit(value)
+                value = round(value,1)
         else:
-            value = round(self.htu21d_client.sensor_data.humidity, 1)
+            value = self.htu21d_client.sensor_data.humidity
+            if value != None:
+                value = round(value,0)
         self._state = value
